@@ -9,6 +9,7 @@ def generate_exel(data:dict[str:str]) -> None:
     dataframe.to_excel(f"sectors_data_{datetime.date.today()}.xlsx", index=False)
 
 
+
 def sector_instrument(div: str, pattern: str, find:str="market_cap") -> str:
     soup = BeautifulSoup(str(div), "html.parser")
     instrument = soup.find_all("span")[0].get_text(strip=True)
@@ -36,11 +37,30 @@ def sector_info(soup: BeautifulSoup,link: str) -> list[str]:
                 sectors.append(sector_info)
     return sectors
 
-def sector_wise_scrap(url: str):
+def get_stock_name(a: str) -> str:
+    soup = BeautifulSoup(str(a), "html.parser")
+    stock_name = soup.find_all("span")[0].get_text(strip=True)
+    return stock_name
+
+def sector_wise_stocks(sector_info: dict[str:str]) -> list[str]:
+    stocks = []
+    response = requests.get(sector_info["link"])
+    soup = BeautifulSoup(response.text, "html.parser")
+    all_stocks = soup.find_all("a",class_=re.compile("sectors__"))
+    for stock in all_stocks:
+        stocks.append(get_stock_name(stock))
+    return stocks
+
+
+
+def sector_wise_scrap(url: str) -> None:
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
     sectors_dict = sector_info(soup=soup, link=url)
-    generate_exel(sectors_dict)
+    stocks= sector_wise_stocks(sectors_dict[1])
+    print(stocks)
+    # generate_exel(sectors_dict)
+
 
 def main():
     sector_wise_scrap(url="https://www.moneycontrol.com/markets/sector-analysis/")

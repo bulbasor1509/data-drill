@@ -1,21 +1,15 @@
+import datetime
 import re
-from http.client import responses
-
 import requests
+import pandas as pd
 from bs4 import BeautifulSoup
 
-def sector_market_cap(div: str, pattern: str) -> str:
-    market_cap_div = div.find("div", class_=re.compile(pattern))
-    soup = BeautifulSoup(str(market_cap_div), "html.parser")
-    market_cap = soup.find_all("span")[0].get_text(strip=True)
-    return market_cap
+def generate_exel(data:dict[str:str]) -> None:
+    dataframe = pd.DataFrame(data=data)
+    dataframe.to_excel(f"sectors_data_{datetime.date.today()}.xlsx", index=False)
 
-def sector_price_to_earnings(div: str, pattern: str) -> str:
-    price_to_earnings_div = div.find("div", class_=re.compile(pattern))
-    print(price_to_earnings_div)
 
 def sector_instrument(div: str, pattern: str, find:str="market_cap") -> str:
-    # instrument_div = div.find("div", class_=re.compile(pattern))
     soup = BeautifulSoup(str(div), "html.parser")
     instrument = soup.find_all("span")[0].get_text(strip=True)
     if find != "market_cap":
@@ -45,7 +39,8 @@ def sector_info(soup: BeautifulSoup,link: str) -> list[str]:
 def sector_wise_scrap(url: str):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
-    print(sector_info(soup,url))
+    sectors_dict = sector_info(soup=soup, link=url)
+    generate_exel(sectors_dict)
 
 def main():
     sector_wise_scrap(url="https://www.moneycontrol.com/markets/sector-analysis/")
